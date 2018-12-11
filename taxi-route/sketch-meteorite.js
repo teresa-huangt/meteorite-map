@@ -24,6 +24,7 @@ var gui;
 var myYear = 1993;
 var myColor = '#eeee00';
 
+var is_good = 0;
 
 
 // Preload the data
@@ -50,14 +51,14 @@ function setup() {
 
   
   get_massMax();
-  // myMap.onChange(drawPoints);
+  myMap.onChange(drawPoints);
 
   // Create GUI
-  get_yearRange();
-  yearSlider = createSlider(1766,2009,1993);
-  yearSlider.position (20,20);
-  cSlider = createSlider(0,255,100);
-  cSlider.position (20,50);
+  //get_yearRange();
+  // yearSlider = createSlider(1766,2009,1993);
+  // yearSlider.position (20,20);
+  // cSlider = createSlider(0,255,100);
+  // cSlider.position (20,50);
 }
 
 
@@ -91,14 +92,26 @@ function get_massMax() {
   for(var j = 0; j < num; j++){
     if (int(maxmass) < int(level0[j].mass)){
       maxmass = level0[j].mass;
-      print(maxmass)
+      //print(maxmass)
     }
   }
-  print('massMax is %s', maxmass);
+  //print('massMax is %s', maxmass);
 }
 
 function draw() {
 
+}
+
+function is_goodyear(){
+  is_good = 0
+  if (typeof year == "undefined"){
+    return
+  }
+  var yy = year[0]+year[1]+year[2]+year[3]
+  if ((int(yy) > 1900) && (int(yy) < 1950)){
+    is_good = 1
+    return
+  }
 }
 
 // draw meteorites using ellipse
@@ -109,13 +122,22 @@ function drawPoints(){
   get_massMax();
   for(var i = 0; i < num; i++){
     let pos = myMap.latLngToPixel(level0[i].reclat, level0[i].reclong)
-    print(level0[i].reclat);
-    print(level0[i].reclong);
+    //print(level0[i].reclat);
+    //print(level0[i].reclong);
+
+    year = level0[i].year;
+    is_goodyear()
+    if (is_good == 1){
+      print(year)
+    } else {
+      continue
+    }
+
 
     let size = level0[i].mass;
-    print(size, 0, maxmass, 0, 10)
+    //ßprint(size, 0, maxmass, 0, 10)
     let normalizeSize = map(log(size), 0, log(maxmass), 0, 50);
-    print('normalizeSize is %d', normalizeSize)
+    //print('normalizeSize is %d', normalizeSize)
     ellipse(pos.x, pos.y, normalizeSize, normalizeSize);
     //ellipse(pos.x, pos.y, 10, 10);
   }  

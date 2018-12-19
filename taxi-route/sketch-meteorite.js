@@ -20,6 +20,9 @@ let num = 50;
 let maxyear = 0;
 let minyear = 0;
 
+let mouseyear = 0;
+let mousegap = 0;
+
 var gui;
 var myYear = 1993;
 var myColor = '#eeee00';
@@ -36,7 +39,7 @@ function preload(){
 
 // Setup
 function setup() {
-	canvas = createCanvas(800,600);
+	canvas = createCanvas(800, 600);
 	myMap = mappa.tileMap(options);
 	myMap.overlay(canvas);
 
@@ -49,8 +52,9 @@ function setup() {
   print(level0.length);
   print(level0);
 
-  
-  get_massMax();
+  cal_yearRange();
+  cal_massMax();
+  show_Introduction();
   myMap.onChange(drawPoints);
 
   // Create GUI
@@ -63,13 +67,12 @@ function setup() {
 
 
 // Get the range of year
-function get_yearRange(){
+function cal_yearRange(){
 
   // maxyear
   for (var k = 0; k < num; k++) {
     if (int(maxyear) < int(level0[k].year)){
       maxyear = level0[k].year;
-      print(maxyear);
     }
   }
   print('yearMax is %s', maxyear);
@@ -79,7 +82,6 @@ function get_yearRange(){
   for (var l = 0; l < num; l++) {
     if (int(minyear) > int(level0[l].year)){
       minyear = level0[l].year;
-      print(minyear);
     }
   }
   print('yearMin is %s', minyear);
@@ -87,61 +89,99 @@ function get_yearRange(){
 
 
 // Get the maximun of the meteorite‘s mass; interact with the circle size
-function get_massMax() {
-
+function cal_massMax() {
   for(var j = 0; j < num; j++){
     if (int(maxmass) < int(level0[j].mass)){
       maxmass = level0[j].mass;
-      //print(maxmass)
     }
   }
-  //print('massMax is %s', maxmass);
 }
+
+
+// 
+function show_Introduction(){
+fill(142, 53, 74);
+text("Move mouse to change time range", 0, height-60)
+}
+
+
 
 function draw() {
-
-}
-
-function is_goodyear(){
-  is_good = 0
-  if (typeof year == "undefined"){
-    return
-  }
-  var yy = year[0]+year[1]+year[2]+year[3]
-  if ((int(yy) > 1900) && (int(yy) < 1950)){
-    is_good = 1
-    return
+  if (is_in_scroll()){
+    cal_mouseyear()
+    drawPoints()
+    draw_scroll()
+    fill(255, 255, 255)
+    if (mouseY < (height-10) ) {
+      text(str(mouseyear-mousegap)+' - '+str(mouseyear+mousegap), mouseX+5, mouseY+10)
+    } else {
+      text(str(mouseyear-mousegap)+' - '+str(mouseyear+mousegap), mouseX+5, mouseY-10)
+    }
   }
 }
 
-// draw meteorites using ellipse
+// Return true if mouse is in bottom rectangle
+function is_in_scroll() {
+  if (mouseX > width) return false
+  if (mouseX < 0) return false
+  if (mouseY > height) return false
+  if (mouseY < height-50) return false
+  return true
+}
+
+// Map year range to the rectangle range
+function cal_mouseyear(){
+  mouseyear = int(map(mouseX, 0, width, int(minyear), int(maxyear)))
+  mousegap = int(map(mouseY, height-50, height, 10, 100))
+}
+
+// Draw meteorites using ellipse
 function drawPoints(){
   clear();
-  noStroke();
-  fill(134, 226, 213,50);
-  get_massMax();
   for(var i = 0; i < num; i++){
-    let pos = myMap.latLngToPixel(level0[i].reclat, level0[i].reclong)
-    //print(level0[i].reclat);
-    //print(level0[i].reclong);
-
-    year = level0[i].year;
-    is_goodyear()
-    if (is_good == 1){
-      print(year)
-    } else {
+    let point = level0[i]
+    if (!is_goodyear(point.year, mouseyear-mousegap, mouseyear+mousegap)){
       continue
     }
-
-
-    let size = level0[i].mass;
-    //ßprint(size, 0, maxmass, 0, 10)
-    let normalizeSize = map(log(size), 0, log(maxmass), 0, 50);
-    //print('normalizeSize is %d', normalizeSize)
-    ellipse(pos.x, pos.y, normalizeSize, normalizeSize);
-    //ellipse(pos.x, pos.y, 10, 10);
-  }  
+    draw_fallpoint(point)
+  } 
+  draw_scroll()
 }
+
+function draw_fallpoint(point){
+  let pos = myMap.latLngToPixel(point.reclat, point.reclong)
+  let normalizeSize = map(log(point.mass), 0, log(maxmass), 0, 50);
+  prepare_draw_fallpoint()
+  ellipse(pos.x, pos.y, normalizeSize, normalizeSize);
+  fill(134, 226, 213)
+  text(int(point.year), pos.x, pos.y)
+}
+
+function prepare_draw_fallpoint(){
+  noStroke();
+  fill(134, 226, 213, 50);
+}
+
+function is_goodyear(year, a, b){
+  if (typeof year == "undefined"){
+    return false
+  }
+  var yy = year[0]+year[1]+year[2]+year[3]
+  if ((int(yy) > a) && (int(yy) < b)){
+    return true
+  }
+  return false
+}
+
+function draw_scroll(){
+  noStroke()
+  fill(142, 53, 74)
+  rect(0, height-50, width, 50)
+  fill(241, 169, 160,90)
+  rect(mouseX-mousegap/2, height-50, mousegap,50)
+}
+
+
 
 
 
